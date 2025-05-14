@@ -5,16 +5,16 @@ using System.Windows.Forms;
 
 namespace GuessNumberGame
 {
-    // Главная форма: ввод ника, кнопки управления
+    
     public partial class MainForm : Form
     {
-        private List<Player> players;
+        private PlayerController _controller;
+        
 
         public MainForm()
         {
-            InitializeComponent(); // Инициализация компонентов интерфейса
-            players = DataStorage.LoadPlayers();
-            // Загружаем список игроков из XML
+            InitializeComponent(); 
+            _controller = new PlayerController();
         }
 
         private void buttonStartGame_Click(object sender, EventArgs e)
@@ -25,20 +25,14 @@ namespace GuessNumberGame
                 MessageBox.Show("Введите ник!");
                 return;
             }
-            // Ищем игрока по нику
-            Player player = players.FirstOrDefault(p => p.Nickname == nick);
-            if (player == null)
-            {
-                player = new Player(nick);
-                players.Add(player);
-            }
-            // Открываем форму угадывания
+
+            var player = _controller.GetOrCreatePlayer(nick);
+
             using (var form = new GuessForm(player))
-            {
                 form.ShowDialog();
-            }
-            DataStorage.SavePlayers(players);
-            // Сохраняем изменения (новые игроки, результаты)
+
+            _controller.Save();
+            
         }
 
         private void buttonViewGames_Click(object sender, EventArgs e)
@@ -49,26 +43,22 @@ namespace GuessNumberGame
                 MessageBox.Show("Введите ник!");
                 return;
             }
-            Player player = players.FirstOrDefault(p => p.Nickname == nick);
+
+            var player = _controller.GetPlayer(nick);
             if (player == null)
             {
                 MessageBox.Show("Игрок не найден!");
                 return;
             }
+
             using (var form = new PlayerGamesForm(player))
-            {
                 form.ShowDialog();
-            }
-            // Показываем историю игр игрока
         }
 
         private void buttonViewRating_Click(object sender, EventArgs e)
         {
-            using (var form = new RatingsForm(players))
-            {
+            using (var form = new RatingsForm(_controller.GetAllPlayers()))
                 form.ShowDialog();
-            }
-            // Показываем рейтинг всех игроков
         }
     }
 }
